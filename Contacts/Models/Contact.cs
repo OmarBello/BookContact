@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using SQLite;
+
+namespace Contacts.Models
+{
+    public class Contact
+    {
+        [PrimaryKey, AutoIncrement] 
+        public int Id { get; set; }
+
+        public string UserId { get; set; }
+
+        [MaxLength(30)]
+        public string FirstName { get; set; }
+
+        [MaxLength(30)]
+        public string LastName { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
+        public string Phone { get; set; }
+
+        public string FullName => FirstName + " " + LastName;
+
+       
+
+        public bool InsertContacts()
+        {
+            int insertedItems = 0;
+            using (SQLiteConnection connection = new SQLiteConnection(App.DatabasePath))
+            {
+                connection.CreateTable<Contact>();
+                insertedItems = connection.Insert(this);
+            }
+            return insertedItems > 0;
+        }
+
+        public static void DeleteContactFromDB(Contact deleteContact)
+        {
+            using (SQLiteConnection connection = new SQLiteConnection(App.DatabasePath))
+            {
+                connection.Query<Contact>("DELETE FROM [Contact] WHERE [UserId] = " + deleteContact.UserId);
+                Console.WriteLine("Total Contacts in DB"+ GetContactsCount());
+            }
+        }
+
+        public static List<Contact> GetContacts()
+        {
+            using (SQLiteConnection conn = new SQLiteConnection(App.DatabasePath))
+            {
+                conn.CreateTable<Contact>();
+                return conn.Table<Contact>().ToList();
+            }
+        }
+
+        public static bool CheckIfUserExists(Contact contact)
+        {
+            using (SQLiteConnection connection = new SQLiteConnection(App.DatabasePath))
+            {
+                var contacts = connection.Table<Contact>();
+                var userContact = contacts.Where(x => x.UserId == contact.UserId).FirstOrDefault();
+                if (userContact == null)
+                    return false;
+                else
+                    return true;
+            }
+        }
+
+        public static int GetContactsCount()
+        {
+            using (SQLiteConnection connection = new SQLiteConnection(App.DatabasePath))
+            {
+                Console.WriteLine(connection.Table<Contact>().Count());
+                return connection.Table<Contact>().Count();
+            }
+        }
+    }
+}
